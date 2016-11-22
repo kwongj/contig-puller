@@ -24,12 +24,13 @@ positional arguments:
 
 optional arguments:
   -h, --help       show this help message and exit
-  --db DBFILE      Target sequence (FASTA) to search for (REQUIRED to create
+  --db DBFILE      target sequence (FASTA) to search for (REQUIRED to create
                    BLAST database)
-  --id ID          Percentage identity cutoff (default=100)
-  --out OUTFILE    Output file (default=contigs.gbk)
-  --anno ANNOFILE  Reference proteins.faa file to annotate from (optional |
+  --id ID          percentage identity cutoff (default=100)
+  --out OUTFILE    output file (default=contigs.gbk)
+  --anno ANNOFILE  reference proteins.faa file to annotate from (optional |
                    requires Prokka to be installed)
+  --cpus CPUS      number of cpus to use (default=8)
   --version        show program's version number and exit
 ```
 

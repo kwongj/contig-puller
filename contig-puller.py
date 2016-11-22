@@ -18,10 +18,11 @@ parser = argparse.ArgumentParser(
 		formatter_class=argparse.RawDescriptionHelpFormatter,
 		description='Extracts contigs containing a target sequence (eg. gene) from several multi-FASTA assemblies \n and aligns the contigs at the target sequence',
 		usage='\n  %(prog)s --db DBFILE --out OUTFILE --anno ANNOFILE [OPTIONS] FASTA-1 FASTA-2 ... FASTA-N')
-parser.add_argument('--db', metavar='DBFILE', required=True, help='Target sequence (FASTA) to search for (REQUIRED to create BLAST database)')
-parser.add_argument('--id', metavar='ID', default='100', help='Percentage identity cutoff (default=100)')
-parser.add_argument('--out', metavar='OUTFILE', default='contigs.gbk', help='Output file (default=contigs.gbk)')
-parser.add_argument('--anno', metavar='ANNOFILE', help='Reference proteins.faa file to annotate from (optional | requires Prokka to be installed)') 
+parser.add_argument('--db', metavar='DBFILE', required=True, help='target sequence (FASTA) to search for (REQUIRED to create BLAST database)')
+parser.add_argument('--id', metavar='ID', default='100', help='percentage identity cutoff (default=100)')
+parser.add_argument('--out', metavar='OUTFILE', default='contigs.gbk', help='output file (default=contigs.gbk)')
+parser.add_argument('--anno', metavar='ANNOFILE', help='reference proteins.faa file to annotate from (optional | requires Prokka to be installed)')
+parser.add_argument('--cpus', metavar='CPUS', default='8', help='number of cpus to use (default=8)')
 #parser.add_argument('--log', metavar='LOGFILE', default='tempdb/temp.log', help='Log file')
 parser.add_argument('assembly', metavar='FASTA', nargs='+', help='FASTA assemblies to search')
 parser.add_argument('--version', action='version', version='%(prog)s version 1.0\nUpdated 19-Jan-2015\nScript by JK')
@@ -153,7 +154,7 @@ else:
 		print 'Annotating %(strname)s ...' % globals()
 		banner()
 		SeqIO.write(seq, splitfile, 'fasta')
-		subprocess.call(["prokka", "--outdir", "tempdb/split", "--force", "--prefix", strname, "--locustag", strname, "--compliant", "--proteins", args.anno, splitfile])
+		subprocess.call(["prokka", "--outdir", "tempdb/split", "--force", "--prefix", strname, "--locustag", strname, "--compliant", "--proteins", args.anno, "--cpus", args.cpus, splitfile])
 	import glob
 	read_files = glob.glob("tempdb/split/*.gbk")
 	with open(outfile, "wb") as write_file:
