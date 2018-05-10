@@ -43,10 +43,10 @@ optional arguments:
 * Specify proteins.faa file to annotate from using `--anno`  
 (recommended to visualise surrounding context of target sequence)
 
-##Bugs
+## Bugs
 Please submit via the GitHub issues page: [https://github.com/kwongj/contig-puller/issues](https://github.com/kwongj/contig-puller/issues)  
 
-##Software Licence
+## Software Licence
 GPLv2: [https://github.com/kwongj/contig-puller/blob/master/LICENSE](https://github.com/kwongj/contig-puller/blob/master/LICENSE)
 
 ## Other links
