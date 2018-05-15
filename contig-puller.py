@@ -1,6 +1,7 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # Script by JK
 # Extracts targeted contigs from a multi-FASTA file eg. draft genome assembly
+
 import subprocess
 import os
 import sys
@@ -25,7 +26,7 @@ parser.add_argument('--anno', metavar='ANNOFILE', help='reference proteins.faa f
 parser.add_argument('--cpus', metavar='CPUS', default='8', help='number of cpus to use (default=8)')
 #parser.add_argument('--log', metavar='LOGFILE', default='tempdb/temp.log', help='Log file')
 parser.add_argument('assembly', metavar='FASTA', nargs='+', help='FASTA assemblies to search')
-parser.add_argument('--version', action='version', version='%(prog)s version 1.0\nUpdated 19-Jan-2015\nScript by JK')
+parser.add_argument('--version', action='version', version='v2.0')
 args = parser.parse_args()
 
 
@@ -33,30 +34,29 @@ args = parser.parse_args()
 def progexit():
 	shutil.rmtree('./tempdb')
 	banner()
-	print 'Done. Output written to %(outfile)s.' % globals()
+	print('Done. Output written to {}.'.format(outfile))
 	banner()
 	sys.exit(0)
 
 def banner():
-	print '--------------------------'
+	print('--------------------------')
 	return()
 
 # Check output file
 outfile = args.out
-tmpout = "tempdb/tmpout"
+tmpout = 'tempdb/tmpout'
 if (os.path.isfile(outfile)):
-	print 'ERROR: %(outfile)s already exists. Please specify another output file.' % globals()
+	print('ERROR: {} already exists. Please specify another output file.'.format(outfile))
 	sys.exit(1)
 
 # Create local BLAST database
-print 'Creating BLAST database ...'
-if (os.path.isdir("./tempdb")):
-	print 'ERROR: ./tempdb already exists. Please remove/rename this directory first.'
+print('Creating BLAST database ...')
+if os.path.isdir('./tempdb'):
+	print('ERROR: ./tempdb already exists. Please remove/rename this directory first.')
 	sys.exit(1)
-subprocess.call(["mkdir", "tempdb"])
-subprocess.call(["makeblastdb", "-in", args.db, "-parse_seqids", "-dbtype", "nucl", "-out", "tempdb/db"])
+subprocess.call(['mkdir', 'tempdb'])
+subprocess.call(['makeblastdb', '-in', args.db, '-parse_seqids', '-dbtype', 'nucl', '-out', 'tempdb/db'])
 banner() 
-
 
 # Run BLAST and find lengths of contigs and orientation/position of target gene
 seqlist = []
@@ -67,12 +67,12 @@ genestart = []
 geneend = []
 for f in args.assembly:
 	seqlist.append(f)
-	blastn_for = NcbiblastnCommandline(query=f, db="tempdb/db", word_size=32, strand="plus", dust="no", perc_identity=args.id, evalue=1E-99, outfmt=6, out="tempdb/bplus.txt")
+	blastn_for = NcbiblastnCommandline(query=f, db='tempdb/db', word_size=32, strand='plus', dust='no', perc_identity=args.id, evalue=1E-99, outfmt=6, out='tempdb/bplus.txt')
 	blastn_for()
-	blastn_rev = NcbiblastnCommandline(query=f, db="tempdb/db", word_size=32, strand="minus", dust="no", perc_identity=args.id, evalue=1E-99, outfmt=6, out="tempdb/bminus.txt")
+	blastn_rev = NcbiblastnCommandline(query=f, db='tempdb/db', word_size=32, strand='minus', dust='no', perc_identity=args.id, evalue=1E-99, outfmt=6, out='tempdb/bminus.txt')
 	blastn_rev()
-	if os.stat("tempdb/bplus.txt").st_size > 0:
-		print 'Searching %(f)s ...' % globals()
+	if os.stat('tempdb/bplus.txt').st_size > 0:
+		print('Searching {} ...'.format(f))
 		bplus = list(csv.reader(open('tempdb/bplus.txt', 'r'), delimiter='\t'))
 		bplus.insert(0, f)
 		seqplus.append(bplus)
@@ -82,11 +82,11 @@ for f in args.assembly:
 		end = int(bplus[1][7])
 		for s in SeqIO.parse(f, 'fasta'):
 			if s.id == cont:
-				print "Found '%(cont)s' (+) ..." % globals()
+				print("Found '{}' (+) ...".format(cont))
 				genestart.append(start - 1)
 				geneend.append(len(s) - end)
-	if os.stat("tempdb/bminus.txt").st_size > 0:
-		print 'Searching %(f)s ...' % globals()
+	if os.stat('tempdb/bminus.txt').st_size > 0:
+		print('Searching {} ...'.format(f))
 		bminus = list(csv.reader(open('tempdb/bminus.txt', 'r'), delimiter='\t'))
 		bminus.insert(0, f)
 		seqminus.append(bminus)
@@ -96,7 +96,7 @@ for f in args.assembly:
 		end = int(bminus[1][7])
 		for s in SeqIO.parse(f, 'fasta'):
 			if s.id == cont:
-				print "Found '%(cont)s' (-) ..." % globals()
+				print("Found '{}' (-) ...".format(cont))
 				genestart.append(len(s) - end)
 				geneend.append(start - 1)
 maxstart = max(genestart)
@@ -105,7 +105,7 @@ banner()
 
 
 # Write target contigs to FASTA file
-print 'Writing forward sequence matches ... '
+print('Writing forward sequence matches ... ')
 for row in seqplus:
 	seqname = row[0]
 	cont = row[1][0]
@@ -122,7 +122,7 @@ for row in seqplus:
 			with open(tmpout, 'a') as f:
 				SeqIO.write(record, f, 'fasta')						# Write new sequence to file
 
-print 'Writing reverse sequence matches (reverse complement) ...'
+print('Writing reverse sequence matches (reverse complement) ...')
 for row in seqminus:
 	seqname = row[0]
 	cont = row[1][0]
@@ -149,16 +149,16 @@ else:
 	for seq in SeqIO.parse(tmpout, 'fasta'):
 		seq.id = os.path.splitext(os.path.basename(seq.id))[0]
 		strname = str(seq.id)
-		splitfile = "tempdb/strname"
+		splitfile = 'tempdb/strname'
 		banner()
-		print 'Annotating %(strname)s ...' % globals()
+		print('Annotating {} ...'.format(strname))
 		banner()
 		SeqIO.write(seq, splitfile, 'fasta')
-		subprocess.call(["prokka", "--outdir", "tempdb/split", "--force", "--prefix", strname, "--locustag", strname, "--compliant", "--proteins", args.anno, "--cpus", args.cpus, splitfile])
+		subprocess.call(['prokka', '--outdir', 'tempdb/split', '--force', '--prefix', strname, '--locustag', strname, '--compliant', '--proteins', args.anno, '--cpus', args.cpus, splitfile])
 	import glob
-	read_files = glob.glob("tempdb/split/*.gbk")
-	with open(outfile, "wb") as write_file:
+	read_files = glob.glob('tempdb/split/*.gbk')
+	with open(outfile, 'w') as write_file:
 		for f in read_files:
-			with open(f, "rb") as infile:
+			with open(f, 'r') as infile:
 				write_file.write(infile.read())
 	progexit()

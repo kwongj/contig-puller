@@ -6,7 +6,7 @@ Jason Kwong (@kwongjc)
 GitHub: [kwongj](https://github.com/kwongj)  
 
 ## Dependencies
-* [Python 2.x](https://www.python.org/downloads/)
+* [Python 3.x](https://www.python.org/downloads/)
 * [BioPython](http://biopython.org/wiki/Main_Page)
 * [Prokka](https://github.com/tseemann/prokka)
 
