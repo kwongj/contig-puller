@@ -31,28 +31,41 @@ args = parser.parse_args()
 
 
 # Functions
+def msg(*args, **kwargs):
+	print(*args, file=sys.stderr, **kwargs)
+
+def err(*args, **kwargs):
+	msg(*args, **kwargs)
+	if os.path.isdir('tempdb'):
+		shutil.rmtree('tempdb')
+	sys.exit(1);
+
+def check_file(f):
+	if os.path.isfile(f) == False:
+		err('ERROR: Cannot find "{}". Check CFML output files exist in this directory.'.format(f))
+
 def progexit():
 	shutil.rmtree('./tempdb')
 	banner()
-	print('Done. Output written to {}.'.format(outfile))
+	msg('Done. Output written to {}.'.format(outfile))
 	banner()
 	sys.exit(0)
 
 def banner():
-	print('--------------------------')
+	msg('--------------------------')
 	return()
 
 # Check output file
 outfile = args.out
 tmpout = 'tempdb/tmpout'
 if (os.path.isfile(outfile)):
-	print('ERROR: {} already exists. Please specify another output file.'.format(outfile))
+	msg('ERROR: {} already exists. Please specify another output file.'.format(outfile))
 	sys.exit(1)
 
 # Create local BLAST database
 print('Creating BLAST database ...')
-if os.path.isdir('./tempdb'):
-	print('ERROR: ./tempdb already exists. Please remove/rename this directory first.')
+if os.path.isdir('tempdb'):
+	msg('ERROR: "tempdb" already exists. Please remove/rename this directory first.')
 	sys.exit(1)
 subprocess.call(['mkdir', 'tempdb'])
 subprocess.call(['makeblastdb', '-in', args.db, '-parse_seqids', '-dbtype', 'nucl', '-out', 'tempdb/db'])
@@ -66,13 +79,14 @@ contigs = []
 genestart = []
 geneend = []
 for f in args.assembly:
+	check_file(f)
 	seqlist.append(f)
 	blastn_for = NcbiblastnCommandline(query=f, db='tempdb/db', word_size=32, strand='plus', dust='no', perc_identity=args.id, evalue=1E-99, outfmt=6, out='tempdb/bplus.txt')
 	blastn_for()
 	blastn_rev = NcbiblastnCommandline(query=f, db='tempdb/db', word_size=32, strand='minus', dust='no', perc_identity=args.id, evalue=1E-99, outfmt=6, out='tempdb/bminus.txt')
 	blastn_rev()
 	if os.stat('tempdb/bplus.txt').st_size > 0:
-		print('Searching {} ...'.format(f))
+		msg('Searching {} ...'.format(f))
 		bplus = list(csv.reader(open('tempdb/bplus.txt', 'r'), delimiter='\t'))
 		bplus.insert(0, f)
 		seqplus.append(bplus)
@@ -82,11 +96,11 @@ for f in args.assembly:
 		end = int(bplus[1][7])
 		for s in SeqIO.parse(f, 'fasta'):
 			if s.id == cont:
-				print("Found '{}' (+) ...".format(cont))
+				msg("Found '{}' (+) ...".format(cont))
 				genestart.append(start - 1)
 				geneend.append(len(s) - end)
 	if os.stat('tempdb/bminus.txt').st_size > 0:
-		print('Searching {} ...'.format(f))
+		msg('Searching {} ...'.format(f))
 		bminus = list(csv.reader(open('tempdb/bminus.txt', 'r'), delimiter='\t'))
 		bminus.insert(0, f)
 		seqminus.append(bminus)
@@ -96,16 +110,19 @@ for f in args.assembly:
 		end = int(bminus[1][7])
 		for s in SeqIO.parse(f, 'fasta'):
 			if s.id == cont:
-				print("Found '{}' (-) ...".format(cont))
+				msg("Found '{}' (-) ...".format(cont))
 				genestart.append(len(s) - end)
 				geneend.append(start - 1)
-maxstart = max(genestart)
-maxend = max(geneend)
+
+if not genestart or not geneend:
+	err('ERROR: No BLAST hits found. Try adjusting --id')
+else:
+	maxstart = max(genestart)
+	maxend = max(geneend)
 banner()
 
-
 # Write target contigs to FASTA file
-print('Writing forward sequence matches ... ')
+msg('Writing forward sequence matches ... ')
 for row in seqplus:
 	seqname = row[0]
 	cont = row[1][0]
@@ -122,7 +139,7 @@ for row in seqplus:
 			with open(tmpout, 'a') as f:
 				SeqIO.write(record, f, 'fasta')						# Write new sequence to file
 
-print('Writing reverse sequence matches (reverse complement) ...')
+msg('Writing reverse sequence matches (reverse complement) ...')
 for row in seqminus:
 	seqname = row[0]
 	cont = row[1][0]
@@ -140,7 +157,6 @@ for row in seqminus:
 			with open(tmpout, 'a') as f:
 				SeqIO.write(record, f, 'fasta')						# Write new sequence to file
 
-
 # Optional annotation
 if args.anno == None:
 	shutil.move(tmpout, outfile)
@@ -151,7 +167,7 @@ else:
 		strname = str(seq.id)
 		splitfile = 'tempdb/strname'
 		banner()
-		print('Annotating {} ...'.format(strname))
+		msg('Annotating {} ...'.format(strname))
 		banner()
 		SeqIO.write(seq, splitfile, 'fasta')
 		subprocess.call(['prokka', '--outdir', 'tempdb/split', '--force', '--prefix', strname, '--locustag', strname, '--compliant', '--proteins', args.anno, '--cpus', args.cpus, splitfile])
